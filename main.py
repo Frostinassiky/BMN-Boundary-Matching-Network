@@ -84,7 +84,8 @@ def test_BMN(data_loader, model, epoch, bm_mask):
 
 def BMN_Train(opt):
     model = BMN(opt)
-    model = torch.nn.DataParallel(model, device_ids=[0, 1]).cuda()
+    model = torch.nn.DataParallel(model, device_ids=list(range(opt['n_gpu']))).cuda()
+    print('use {} gpus to train!'.format(opt['n_gpu']))
     optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=opt["training_lr"],
                            weight_decay=opt["weight_decay"])
 
@@ -99,9 +100,9 @@ def BMN_Train(opt):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=opt["step_size"], gamma=opt["step_gamma"])
     bm_mask = get_mask(opt["temporal_scale"])
     for epoch in range(opt["train_epochs"]):
-        scheduler.step()
         train_BMN(train_loader, model, optimizer, epoch, bm_mask)
         test_BMN(test_loader, model, epoch, bm_mask)
+        scheduler.step()
 
 
 def BMN_inference(opt):
